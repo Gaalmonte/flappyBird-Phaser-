@@ -9,7 +9,7 @@ const config = {
   // Arcade physics plugin, manages physics simulations
     default: 'arcade',
     arcade: {
-      // gravity: {y:200}
+      // gravity: {y:400},
       debug:true
     }
   },
@@ -24,24 +24,39 @@ const config = {
 function preload(){
   this.load.image('sky', 'assets/sky.png');
   this.load.image('bird', 'assets/bird.png');
+  this.load.image('pipe','assets/pipe.png');
 }
 const VELOCITY = 200;
 let bird = null;
-let totalDelta = null;
+let pipe = null;
+const flapVelocity = 300;
+const initialBirdPosition = {x: config.width * 0.1, y: config.height / 2};
 // Initializing instances of objects in memory
 function create(){
   this.add.image(0,0,'sky').setOrigin(0);
-  bird = this.physics.add.sprite(config.width*0.1,config.height/2,'bird').setOrigin(0);
-  bird.body.velocity.x = VELOCITY;
+  bird = this.physics.add.sprite(initialBirdPosition.x,initialBirdPosition.y,'bird').setOrigin(0);
+  bird.body.gravity.y = 400;
+  pipe = this.add.sprite(300,350,'pipe').setOrigin(0);
+
+  this.input.on('pointerdown', flap);
+  this.input.keyboard.on('keydown_SPACE', flap);
 }
 
-// 60 fps / 60 times per second updates
+// if bird y position is smaller than 0 greater than height of the canvas
+// then alert 'you have lost'
 
 function update(time,delta){
-  if(bird.x >= config.width - bird.width){
-    bird.body.velocity.x = -VELOCITY;
-  } else if (bird.x <= 0){
-    bird.body.velocity.x = VELOCITY;
+  if(bird.y > config.height || bird.y < 0){
+    restartBirdPosition();
   }
+}
+
+function restartBirdPosition(){
+  bird.x = initialBirdPosition.x;
+  bird.y = initialBirdPosition.y;
+  bird.body.velocity.y = 0;
+}
+function flap(){
+  bird.body.velocity.y = -flapVelocity;
 }
 new Phaser.Game(config);

@@ -30,12 +30,14 @@ const VELOCITY = 200;
 const PIPES_TO_RENDER = 4;
 
 let bird = null;
+let pipes = null;
 
 let upperPipe = null;
 let lowerPipe = null;
 
 let pipeHorizontalDistance = 0;
-const pipeVerticalDistancerange = [150,250];
+const pipeVerticalDistanceRange = [150,250];
+const pipeHorizontalDistanceRange = [500,550];
 
 const flapVelocity = 300;
 const initialBirdPosition = {x: config.width * 0.1, y: config.height / 2};
@@ -43,16 +45,18 @@ const initialBirdPosition = {x: config.width * 0.1, y: config.height / 2};
 // Initializing instances of objects in memory
 function create(){
   this.add.image(0,0,'sky').setOrigin(0);
-
   bird = this.physics.add.sprite(initialBirdPosition.x,initialBirdPosition.y,'bird').setOrigin(0);
   bird.body.gravity.y = 400;
 
+  pipes = this.physics.add.group();
+
   for (let i = 0; i < PIPES_TO_RENDER; i++){
-    const upperPipe = this.physics.add.sprite(0,0,'pipe').setOrigin(0,1);
-    const lowerPipe = this.physics.add.sprite(0,0,'pipe').setOrigin(0,0);
+    const upperPipe = pipes.create(0,0,'pipe').setOrigin(0,1);
+    const lowerPipe = pipes.create(0,0,'pipe').setOrigin(0,0);
 
     placePipe(upperPipe,lowerPipe);
   }
+  pipes.setVelocityX(-200);
 
   this.input.on('pointerdown', flap);
   this.input.keyboard.on('keydown_SPACE', flap);
@@ -65,22 +69,42 @@ function update(time,delta){
   if(bird.y > config.height || bird.y < 0){
     restartBirdPosition();
   }
+  recyclePipes();
 }
 
 function placePipe(uPipe, lPipe){
-  pipeHorizontalDistance += 400;
-  let pipeVerticalDistance = Phaser.Math.Between(...pipeVerticalDistancerange);
-  let pipeVerticalPosition = Phaser.Math.Between(0+20, config.height - 20 - pipeVerticalDistance);
+  const rightMostX = getRightMostPipe();
+  const pipeVerticalDistance = Phaser.Math.Between(...pipeVerticalDistanceRange);
+  const pipeVerticalPosition = Phaser.Math.Between(0+20, config.height - 20 - pipeVerticalDistance);
+  const pipeHorizontalDistance = Phaser.Math.Between(...pipeHorizontalDistanceRange);
 
-  uPipe.x = pipeHorizontalDistance;
+  uPipe.x = rightMostX + pipeHorizontalDistance;
   uPipe.y = pipeVerticalDistance;
 
   lPipe.x = uPipe.x;
   lPipe.y = uPipe.y + pipeVerticalDistance;
+}
 
-  uPipe.body.velocity.x= -200;
-  lPipe.body.velocity.x = -200;
+function recyclePipes(){
+  const tempPipes = [];
+  pipes.getChildren().forEach(pipe => {
+    if (pipe.getBounds().right < 0) {
+      tempPipes.push(pipe);
+      if (tempPipes.length === 2){
+        placePipe(...tempPipes);
+      }
+    }
+  })
+}
+function getRightMostPipe(){
+  let rightMostX = 0;
 
+  debugger
+  pipes.getChildren().forEach(function(pipe){
+    debugger
+    rightMostX = Math.max(pipe.x, rightMostX);
+  })
+  return rightMostX;
 }
 function restartBirdPosition(){
   bird.x = initialBirdPosition.x;

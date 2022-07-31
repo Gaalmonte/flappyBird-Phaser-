@@ -10,7 +10,7 @@ const config = {
     default: 'arcade',
     arcade: {
       // gravity: {y:400},
-      debug:true
+      debug: true,
     }
   },
   scene:{
@@ -27,16 +27,19 @@ function preload(){
   this.load.image('pipe','assets/pipe.png');
 }
 const VELOCITY = 200;
+const PIPES_TO_RENDER = 4;
+
 let bird = null;
 
 let upperPipe = null;
 let lowerPipe = null;
 
+let pipeHorizontalDistance = 0;
 const pipeVerticalDistancerange = [150,250];
-let pipeVerticalDistance = Phaser.Math.Between(pipeVerticalDistancerange[0],pipeVerticalDistancerange[1])
 
 const flapVelocity = 300;
 const initialBirdPosition = {x: config.width * 0.1, y: config.height / 2};
+
 // Initializing instances of objects in memory
 function create(){
   this.add.image(0,0,'sky').setOrigin(0);
@@ -44,8 +47,12 @@ function create(){
   bird = this.physics.add.sprite(initialBirdPosition.x,initialBirdPosition.y,'bird').setOrigin(0);
   bird.body.gravity.y = 400;
 
-  upperPipe = this.add.sprite(400,100,'pipe').setOrigin(0,1);
-  lowerPipe = this.add.sprite(400,upperPipe.y + pipeVerticalDistance,'pipe').setOrigin(0,0);
+  for (let i = 0; i < PIPES_TO_RENDER; i++){
+    const upperPipe = this.physics.add.sprite(0,0,'pipe').setOrigin(0,1);
+    const lowerPipe = this.physics.add.sprite(0,0,'pipe').setOrigin(0,0);
+
+    placePipe(upperPipe,lowerPipe);
+  }
 
   this.input.on('pointerdown', flap);
   this.input.keyboard.on('keydown_SPACE', flap);
@@ -60,6 +67,21 @@ function update(time,delta){
   }
 }
 
+function placePipe(uPipe, lPipe){
+  pipeHorizontalDistance += 400;
+  let pipeVerticalDistance = Phaser.Math.Between(...pipeVerticalDistancerange);
+  let pipeVerticalPosition = Phaser.Math.Between(0+20, config.height - 20 - pipeVerticalDistance);
+
+  uPipe.x = pipeHorizontalDistance;
+  uPipe.y = pipeVerticalDistance;
+
+  lPipe.x = uPipe.x;
+  lPipe.y = uPipe.y + pipeVerticalDistance;
+
+  uPipe.body.velocity.x= -200;
+  lPipe.body.velocity.x = -200;
+
+}
 function restartBirdPosition(){
   bird.x = initialBirdPosition.x;
   bird.y = initialBirdPosition.y;
